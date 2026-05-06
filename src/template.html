@@ -1,0 +1,246 @@
+<div id="gc-panel">
+  <div class="hdr" id="gc-hdr">
+    <div><span id="gc-dot" class="dot" title="health"></span><span class="title">Gather</span><span id="gc-pos" class="pos"></span></div>
+    <div class="ctrl">
+      <button id="gc-recon" title="reconectar/recarregar listeners">↻</button>
+      <button id="gc-min" data-act="min" title="minimizar (M)">—</button>
+      <button id="gc-hide" title="esconder (Ctrl+G)">×</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="tabs">
+      <div class="tab on" data-tab="self"><div class="ico">🕹</div><div class="tablabel">self</div></div>
+      <div class="tab" data-tab="auto"><div class="ico">♻</div><div class="tablabel">auto</div></div>
+      <div class="tab" data-tab="prof"><div class="ico">👤</div><div class="tablabel">prof</div></div>
+      <div class="tab" data-tab="chat"><div class="ico">💬</div><div class="tablabel">chat</div></div>
+      <div class="tab" data-tab="admin"><div class="ico">⚙</div><div class="tablabel">admin</div></div>
+      <div class="tab" data-tab="watch"><div class="ico">👁</div><div class="tablabel">watch</div></div>
+      <div class="tab" data-tab="insp"><div class="ico">🔍</div><div class="tablabel">insp</div></div>
+      <div class="tab" data-tab="disc"><div class="ico">🧪</div><div class="tablabel">disc</div></div>
+      <div class="tab" data-tab="rooms"><div class="ico">🚪</div><div class="tablabel">rooms</div></div>
+    </div>
+    <div class="body">
+
+      <div class="pane on" data-pane="self">
+        <div class="label">meu id / posição</div>
+        <div class="row">
+          <button id="gc-cpid" class="tiny">📋 meu userId</button>
+          <button id="gc-cppos" class="tiny">📋 minha pos</button>
+        </div>
+        <div class="label">mover</div>
+        <div class="grid4"><button data-m="Up">↑</button><button data-m="Left">←</button><button data-m="Down">↓</button><button data-m="Right">→</button></div>
+        <div class="label">virar</div>
+        <div class="grid4"><button data-f="Up">↑</button><button data-f="Left">←</button><button data-f="Down">↓</button><button data-f="Right">→</button></div>
+        <div class="label">teleport (usa mapId atual)</div>
+        <div class="row">x<input id="gc-tx" value="5">y<input id="gc-ty" value="5"><button id="gc-tp" class="go">go</button></div>
+        <div class="row" style="font-size:9px;color:#64748b">mapId: <span id="gc-mymap">?</span></div>
+        <div class="label">walk-to (path)</div>
+        <div class="row">x<input id="gc-wx" value="5">y<input id="gc-wy" value="5"><button id="gc-walkto" class="go toggle" data-loop="walkto" data-label="walk">walk</button></div>
+        <div class="label">favoritas (shift+click salva · right-click remove)</div>
+        <div class="row" id="gc-favs"></div>
+        <div class="label">recorder</div>
+        <div class="grid3"><button id="gc-rec-start">● rec</button><button id="gc-rec-stop" class="stop">■</button><button id="gc-rec-play" class="go">▶</button></div>
+        <div class="label">fx</div>
+        <div class="grid3"><button id="gc-confetti" class="go">🎉</button><button id="gc-shake" class="go">📳</button><button id="gc-respawn" class="stop">↻ resp</button></div>
+        <div class="label">estado</div>
+        <div class="grid"><button id="gc-ghost" class="toggle">👻 ghost</button><button id="gc-away" class="toggle">💤 away</button></div>
+      </div>
+
+      <div class="pane" data-pane="auto">
+        <div class="label">automações (click = liga/desliga)</div>
+        <div class="grid">
+          <button class="go toggle" data-loop="spin" data-label="spin">spin</button>
+          <button class="go toggle" data-loop="walk" data-label="walk□">walk□</button>
+        </div>
+        <div class="grid">
+          <button class="go toggle" data-loop="dance" data-label="dance">dance</button>
+          <button class="go toggle" data-loop="rand" data-label="random">random</button>
+        </div>
+        <div class="grid">
+          <button class="go toggle" data-loop="tp" data-label="tp loop">tp loop</button>
+          <button class="go toggle" data-loop="conf" data-label="🎉 spam">🎉 spam</button>
+        </div>
+        <div class="label">intervalo (ms)</div>
+        <div class="row">
+          <input id="gc-ims" class="med" value="200" type="number" min="50" max="5000">
+          <span style="font-size:9px;color:#64748b">aplica no próximo start</span>
+        </div>
+        <div class="label">follow user</div>
+        <div class="row"><input id="gc-fid" class="med" placeholder="userId"><button id="gc-follow" class="go toggle" data-loop="follow" data-label="follow">follow</button></div>
+        <div class="sep"></div>
+        <button id="gc-stop" class="stop" style="width:100%">⏹ STOP ALL</button>
+        <div style="font-size:9px;color:#64748b;margin-top:6px;line-height:1.5">Nada roda automaticamente. Cada botão é toggle independente — clica pra ligar, clica de novo pra desligar. Os ativos ficam verdes pulsantes.</div>
+      </div>
+
+      <div class="pane" data-pane="prof">
+        <div class="label">name</div>
+        <div class="row"><input id="gc-pname" class="wide"><button id="gc-pname-set" class="go tiny">set</button></div>
+        <div class="label">emoji status</div>
+        <div class="pillrow" id="gc-emo-quick"></div>
+        <div class="row"><input id="gc-pemo" class="wide" placeholder="🎉"><button id="gc-pemo-set" class="go tiny">set</button></div>
+        <button id="gc-pemo-clear" class="tiny">limpar emoji</button>
+        <div class="label">text status</div>
+        <div class="row"><input id="gc-ptxt" class="wide" placeholder="hacking"><button id="gc-ptxt-set" class="go tiny">set</button></div>
+        <div class="label">title / pronouns</div>
+        <div class="row"><input id="gc-ptitle" class="med" placeholder="title"><button id="gc-ptitle-set" class="go tiny">set</button></div>
+        <div class="row"><input id="gc-ppron" class="med" placeholder="they/them"><button id="gc-ppron-set" class="go tiny">set</button></div>
+        <div class="label">emote</div>
+        <div class="grid4">
+          <button data-emote="dance">💃</button><button data-emote="wave">👋</button>
+          <button data-emote="thumbsup">👍</button><button data-emote="heart">❤</button>
+          <button data-emote="cry">😢</button><button data-emote="laugh">😂</button>
+          <button data-emote="clap">👏</button><button data-emote="party">🥳</button>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="chat">
+        <div class="label">histórico (<span id="gc-chatcount">0</span>)</div>
+        <div id="gc-chatbox" class="chatbox"></div>
+        <div class="row" style="margin-top:4px">
+          <button id="gc-chat-clear" class="tiny stop">clear</button>
+          <button id="gc-chat-copy" class="tiny">📋 copy all</button>
+          <button id="gc-chat-export" class="tiny">⬇ export</button>
+        </div>
+        <div class="label">enviar mensagem global</div>
+        <textarea id="gc-chat-in" placeholder="msg"></textarea>
+        <button id="gc-chat-send" class="go" style="width:100%;margin-top:4px">📨 enviar</button>
+      </div>
+
+      <div class="pane" data-pane="admin">
+        <div class="label">⚠ alvo</div>
+        <div class="row"><input id="gc-uid" class="wide" placeholder="userId alvo"></div>
+        <div class="label">teleport alvo</div>
+        <div class="row">x<input id="gc-ax" value="10">y<input id="gc-ay" value="10"><button id="gc-tpu" class="adm">tp</button></div>
+        <div class="label">virar alvo</div>
+        <div class="grid4"><button data-fu="Up" class="adm">↑</button><button data-fu="Left" class="adm">←</button><button data-fu="Down" class="adm">↓</button><button data-fu="Right" class="adm">→</button></div>
+        <div class="label">mover alvo</div>
+        <div class="grid4"><button data-mu="Up" class="adm">↑</button><button data-mu="Left" class="adm">←</button><button data-mu="Down" class="adm">↓</button><button data-mu="Right" class="adm">→</button></div>
+        <div class="label">force-mute</div>
+        <div class="grid4">
+          <button data-mk="audio" class="adm">🎤</button><button data-mk="video" class="adm">📷</button>
+          <button data-mk="screen" class="adm">🖥</button><button data-mk="sound" class="adm">🔊</button>
+        </div>
+        <div class="label">ações</div>
+        <div class="grid">
+          <button id="gc-ufollow" class="adm">follow</button><button id="gc-uunfollow" class="adm">unfollow</button>
+          <button id="gc-uspot" class="adm">⭐ spot</button><button id="gc-uunspot" class="adm">unspot</button>
+          <button id="gc-ughost" class="adm">👻 ghost</button><button id="gc-uunghost" class="adm">unghost</button>
+          <button id="gc-uwave" class="adm">👋 wave</button><button id="gc-uring" class="adm">🔔 ring</button>
+          <button id="gc-ublock" class="adm">🚫 block</button><button id="gc-uunblock" class="adm">unblock</button>
+          <button id="gc-ukick" class="stop">kick</button><button id="gc-uban" class="stop">ban</button>
+        </div>
+        <div class="label">log actions</div>
+        <div id="gc-actionlog" class="actionlog"></div>
+      </div>
+
+      <div class="pane" data-pane="watch">
+        <div class="label">alertar quando user entrar</div>
+        <div class="row"><input id="gc-wn" class="med" placeholder="nome (parcial)"><button id="gc-wadd" class="go tiny">+</button></div>
+        <div class="row" style="font-size:10px;color:#94a3b8">
+          <label><input type="checkbox" id="gc-wsound" checked style="width:auto"> bip</label>
+          <label><input type="checkbox" id="gc-wdesktop" style="width:auto"> notif</label>
+        </div>
+        <div id="gc-watchlist"></div>
+        <div class="sep"></div>
+        <div class="label">users (<span id="gc-uc">0</span>)</div>
+        <div class="userlist" id="gc-ul"></div>
+        <button id="gc-refresh" style="width:100%;margin-top:6px">🔄 refresh</button>
+      </div>
+
+      <div class="pane" data-pane="insp">
+        <div class="label">live frames</div>
+        <div class="row">
+          <input id="gc-ifilter" class="med" placeholder="incluir (regex)">
+          <select id="gc-idir" style="width:auto"><option value="all">all</option><option value="send">send</option><option value="recv">recv</option></select>
+          <button id="gc-ipause" class="tiny">⏸</button>
+          <button id="gc-iclear" class="stop tiny">clr</button>
+        </div>
+        <div class="row">
+          <input id="gc-ihide" class="med" placeholder="esconder (regex)" title="regex pra EXCLUIR frames (ex: DeltaState|heartbeat)">
+          <button id="gc-ihide-clear" class="tiny" title="limpar hidden list">limpar</button>
+        </div>
+        <div class="label" id="gc-ihidden-label" style="display:none">ocultos (click remove)</div>
+        <div class="pillrow" id="gc-ihidden"></div>
+        <div id="gc-frames" class="frames"></div>
+        <div class="label">detalhe</div>
+        <div id="gc-fdetail" class="json">click frame</div>
+        <div class="grid3">
+          <button id="gc-freplay" class="go tiny">↻ replay</button>
+          <button id="gc-fcopy" class="tiny">📋 copy</button>
+          <button id="gc-fexport" class="tiny">⬇ export</button>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="disc">
+        <div class="label">actions vistas (<span id="gc-acount">0</span>) — click nome = replay · 📋 = copia JSON</div>
+        <div class="pillrow" id="gc-actions"></div>
+        <div class="label">models vistos</div>
+        <div class="pillrow" id="gc-models"></div>
+        <div class="label">message types</div>
+        <div class="pillrow" id="gc-msgtypes"></div>
+        <div class="sep"></div>
+        <div class="label">enviar action raw</div>
+        <div class="row"><input id="gc-rawname" class="med" placeholder="actionName"></div>
+        <textarea id="gc-rawargs" placeholder='args JSON, ex: [{"x":5,"y":5}]'></textarea>
+        <div class="row" style="margin-top:4px">
+          <label style="font-size:10px"><input type="checkbox" id="gc-rawself" checked style="width:auto"> on me</label>
+          <input id="gc-rawtid" class="med" placeholder="ou userId">
+          <button id="gc-rawsend" class="adm tiny">📤 send</button>
+          <button id="gc-rawcopy" class="tiny">📋</button>
+        </div>
+        <div class="label">resultado</div>
+        <div id="gc-rawres" class="json">—</div>
+      </div>
+
+      <div class="pane" data-pane="rooms">
+        <div class="label">map areas (<span id="gc-rmcount">0</span>) — 🔒/🔓 click toggle</div>
+        <div class="row">
+          <input id="gc-rmfilter" class="med" placeholder="filtro nome/id">
+          <button id="gc-rmlockall" class="adm tiny">🔒 all</button>
+          <button id="gc-rmunlockall" class="tiny">🔓 all</button>
+          <button id="gc-rmdump" class="tiny">📋 dump</button>
+        </div>
+        <div id="gc-rmlist" class="userlist"></div>
+        <div class="label">lock/unlock manual (areaId)</div>
+        <div class="row">
+          <input id="gc-rmid" class="wide" placeholder="MapArea uuid">
+        </div>
+        <div class="grid3">
+          <button id="gc-rmlock" class="adm">🔒 lock</button>
+          <button id="gc-rmunlock" class="go">🔓 unlock</button>
+          <button id="gc-rmtoggle">toggle</button>
+        </div>
+        <div class="sep"></div>
+        <div class="label">maps/rooms (<span id="gc-mpcount">0</span>) — click = tp</div>
+        <div id="gc-mplist" class="userlist"></div>
+        <div class="label">tp manual (mapId + xy)</div>
+        <div class="row">
+          <input id="gc-mpid" class="wide" placeholder="mapId">
+        </div>
+        <div class="row">
+          x<input id="gc-mpx" value="5">y<input id="gc-mpy" value="5">
+          <button id="gc-mpgo" class="go">tp</button>
+        </div>
+        <div class="sep"></div>
+        <div class="label">enterSpace (alvo SpaceUser)</div>
+        <div class="row">
+          <input id="gc-esid" class="wide" placeholder="targetUserId (ou usa alvo do admin)">
+          <button id="gc-esgo" class="go tiny">go</button>
+        </div>
+        <div class="label">loadSpaceUser</div>
+        <div class="row">
+          <input id="gc-lsut" class="med" value="OfficeView" placeholder="connectionTarget">
+          <button id="gc-lsugo" class="go tiny">load</button>
+        </div>
+        <div class="label">ir para outro space (URL)</div>
+        <div class="row">
+          <input id="gc-gsid" class="wide" placeholder="spaceId (slug ou uuid)">
+          <button id="gc-gsgo" class="adm tiny">↗ ir</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="toast" id="gc-toast"></div>
+</div>
+<button id="gc-fab" title="abrir Gather Ctl">⚡</button>

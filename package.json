@@ -1,0 +1,14 @@
+{
+  "name": "gather-ctl",
+  "version": "4.1.0",
+  "description": "Gather.town WebSocket controller userscript — modular build",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2"
+  }
+}
