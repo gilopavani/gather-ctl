@@ -839,8 +839,17 @@ export async function boot() {
       row.innerHTML = `<span class="nm" title="${idStr}">${m.name||idStr.slice(0,8)}${here}</span><span class="co">${dim}</span>`;
       row.onclick = () => {
         panel.querySelector('#gc-mpid').value = idStr;
-        ctl.teleportToMap(idStr, +panel.querySelector('#gc-mpx').value || 5, +panel.querySelector('#gc-mpy').value || 5);
-        showToast('tp → ' + (m.name||idStr.slice(0,8)));
+        // tenta spawn de map / area do tipo spawn / centro do mapa
+        const spawn = m.spawns?.[0] || m.defaultSpawn;
+        const spawnArea = [...state.mapAreas.values()].find(a => a.mapId === idStr && /spawn/i.test(a.areaType||a.type||a.name||''));
+        let x, y;
+        if (spawn?.x != null) { x = spawn.x; y = spawn.y; }
+        else if (spawnArea) { x = Math.floor((spawnArea.x||0) + (spawnArea.width||1)/2); y = Math.floor((spawnArea.y||0) + (spawnArea.height||1)/2); }
+        else if (m.dimensions) { x = Math.floor((m.dimensions.width||10)/2); y = Math.floor((m.dimensions.height||10)/2); }
+        else { x = +panel.querySelector('#gc-mpx').value || 5; y = +panel.querySelector('#gc-mpy').value || 5; }
+        console.log(`[tpMap] ${m.name||idStr.slice(0,8)} → (${x},${y})`, { spawn, spawnArea: !!spawnArea, dim: m.dimensions });
+        ctl.teleportToMap(idStr, x, y);
+        showToast(`tp → ${m.name||idStr.slice(0,8)} (${x},${y})`);
       };
       row.oncontextmenu = e => { e.preventDefault(); navigator.clipboard?.writeText(idStr); showToast('mapId copiado'); };
       box.appendChild(row);
@@ -1038,15 +1047,9 @@ export async function boot() {
 
   // ==================== watchdog / auto-recover ====================
   const redetectUserId = () => {
+    // só trust URL — frame-based detect pegava args[1] de actions miradas em OUTROS users
     const fromUrl = new URL(location.href).searchParams.get('userId');
     if (fromUrl && fromUrl !== userId) { userId = fromUrl; ctl.userId = userId; console.log('[GatherCtl] userId atualizado via URL', userId); return true; }
-    for (let i = liveFrames.length - 1; i >= Math.max(0, liveFrames.length - 50); i--) {
-      const f = liveFrames[i];
-      if (f.dir === 'send' && f.obj?.type === 'Action' && f.obj.args?.[0] === 'SpaceUser' && typeof f.obj.args[1] === 'string') {
-        if (f.obj.args[1] !== userId) { userId = f.obj.args[1]; ctl.userId = userId; console.log('[GatherCtl] userId atualizado via frame', userId); return true; }
-        break;
-      }
-    }
     return false;
   };
 
