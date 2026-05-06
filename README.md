@@ -4,11 +4,13 @@ Userscript pra controlar Gather.town via WebSocket. Painel glass com self/auto/p
 
 ## Instalar
 
-1. Tampermonkey (Chrome/Firefox/Brave)
-2. Cria script novo, cola conteúdo de [`dist/gather-ctl.user.js`](dist/gather-ctl.user.js)
-3. Salva. Abre `https://app.v2.gather.town/...`
+**Click pra instalar no Tampermonkey** (auto-update via `@updateURL`):
 
-Ou aponta `@require` direto pro raw do GitHub.
+👉 https://github.com/gilopavani/gather-ctl/raw/main/dist/gather-ctl.user.js
+
+Cola URL no browser com Tampermonkey ativo → modal "Install" → confirma.
+
+Atualizar manualmente: TM dashboard → script → ⚙ → "Check for userscript updates".
 
 ## Estrutura
 
