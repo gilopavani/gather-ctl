@@ -1,12 +1,14 @@
 // ==UserScript==
 // @name         Gather Controller
 // @namespace    local.gather.ctl
-// @version      4.1.0
+// @version      4.2.0
 // @description  Gather.town WS controller — modular build
 // @match        https://app.v2.gather.town/*
 // @match        https://gather.town/*
 // @run-at       document-start
 // @grant        none
+// @updateURL    https://github.com/gilopavani/gather-ctl/raw/main/dist/gather-ctl.user.js
+// @downloadURL  https://github.com/gilopavani/gather-ctl/raw/main/dist/gather-ctl.user.js
 // ==/UserScript==
 
 (() => {
@@ -101,6 +103,19 @@
 
   // src/util.js
   var uuid = () => crypto.randomUUID();
+  var bigintReplacer = (_k, v) => {
+    if (typeof v === "bigint") return v.toString() + "n";
+    if (v instanceof Map) return Object.fromEntries(v);
+    if (v instanceof Set) return [...v];
+    return v;
+  };
+  var safeStringify = (obj, indent) => {
+    try {
+      return JSON.stringify(obj, bigintReplacer, indent);
+    } catch (e) {
+      return `[serialize error: ${e.message}]`;
+    }
+  };
   var h2b = (h) => {
     const b = new Uint8Array(h.length / 2);
     for (let i = 0; i < b.length; i++) b[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
@@ -438,6 +453,9 @@
           x<input id="gc-mpx" value="5">y<input id="gc-mpy" value="5">
           <button id="gc-mpgo" class="go">tp</button>
         </div>
+        <div class="sep"></div>
+        <div class="label">join meeting area (server tp)</div>
+        <button id="gc-jmgo" class="go" style="width:100%">\u26A1 joinMeeting</button>
         <div class="sep"></div>
         <div class="label">enterSpace (alvo SpaceUser)</div>
         <div class="row">
@@ -794,6 +812,9 @@
         for (const a of [...fromState, ...fromFrames]) if (a.id) merged.set(String(a.id), { ...merged.get(String(a.id)) || {}, ...a });
         return [...merged.values()];
       },
+      // join meeting area (server teleporta automaticamente)
+      joinMeeting: () => act("updateTargetMeetingArea", [{}]),
+      joinMeetingAs: (tid) => actOn(tid, "updateTargetMeetingArea", [{}]),
       // teleport entre maps/rooms (mesmo space)
       teleportToMap: (mapId, x = 5, y = 5, d = "Down") => act("teleport", [{ x, y, direction: d, mapId }]),
       teleportToArea: (areaId) => {
@@ -945,7 +966,7 @@
         return {};
       }
     };
-    const saveFavs = (favs) => localStorage.setItem(favKey, JSON.stringify(favs));
+    const saveFavs = (favs) => localStorage.setItem(favKey, safeStringify(favs));
     ctl.saveFav = (slot) => {
       const favs = loadFavs();
       favs[slot] = { x: state.myPos.x, y: state.myPos.y, d: state.myPos.direction, m: state.myPos.mapId };
@@ -1084,7 +1105,7 @@
     panel.querySelector("#gc-cpid").onclick = () => copyToClipboard(userId, "userId copiado");
     panel.querySelector("#gc-cppos").onclick = () => {
       const p = state.myPos;
-      copyToClipboard(JSON.stringify({ x: p.x, y: p.y, direction: p.direction, mapId: p.mapId }), "pos copiada");
+      copyToClipboard(safeStringify({ x: p.x, y: p.y, direction: p.direction, mapId: p.mapId }), "pos copiada");
     };
     panel.querySelector("#gc-confetti").onclick = () => ctl.confetti();
     panel.querySelector("#gc-shake").onclick = () => ctl.shakeCamera(15, 1500);
@@ -1267,7 +1288,7 @@
       copyToClipboard(txt, `${chatLog.length} msgs copiadas`);
     };
     panel.querySelector("#gc-chat-export").onclick = () => {
-      const blob = new Blob([JSON.stringify(chatLog, null, 2)], { type: "application/json" });
+      const blob = new Blob([safeStringify(chatLog, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `chat-${Date.now()}.json`;
@@ -1453,7 +1474,7 @@
     panel.querySelector("#gc-rmunlockall").onclick = () => ctl.unlockAll();
     panel.querySelector("#gc-rmdump").onclick = () => {
       const arr = ctl.dumpAreas();
-      copyToClipboard(JSON.stringify(arr, null, 2), `${arr.length} \xE1reas copiadas`);
+      copyToClipboard(safeStringify(arr, null, 2), `${arr.length} \xE1reas copiadas`);
       console.table(arr);
     };
     const rmId = () => panel.querySelector("#gc-rmid").value.trim();
@@ -1468,6 +1489,10 @@
     panel.querySelector("#gc-rmtoggle").onclick = () => {
       const id = rmId();
       if (id) ctl.toggleAreaLock(id);
+    };
+    panel.querySelector("#gc-jmgo").onclick = () => {
+      ctl.joinMeeting();
+      showToast("joinMeeting enviado");
     };
     panel.querySelector("#gc-esgo").onclick = () => {
       const t = panel.querySelector("#gc-esid").value.trim() || panel.querySelector("#gc-uid").value.trim();
@@ -1548,7 +1573,7 @@
         return /* @__PURE__ */ new Set();
       }
     };
-    const saveHidden = (set) => localStorage.setItem(hiddenKey, JSON.stringify([...set]));
+    const saveHidden = (set) => localStorage.setItem(hiddenKey, safeStringify([...set]));
     const hiddenTags = loadHidden();
     const frameTag = (f) => f.obj?.action || f.obj?.type || "?";
     const hideTag = (tag) => {
@@ -1605,7 +1630,7 @@
         if (dir !== "all" && f.dir !== dir) return false;
         const tag = frameTag(f);
         if (hiddenTags.has(tag)) return false;
-        const full = tag + " " + JSON.stringify(f.obj?.args || "").slice(0, 200);
+        const full = tag + " " + safeStringify(f.obj?.args || "").slice(0, 200);
         if (re && !re.test(full)) return false;
         if (hideRe && hideRe.test(full)) return false;
         return true;
@@ -1613,7 +1638,7 @@
       box.innerHTML = arr.map((f, i) => {
         const ts = new Date(f.t).toTimeString().slice(0, 8);
         const tag = frameTag(f);
-        const sub = f.obj?.action ? JSON.stringify(f.obj.args || []).slice(0, 80) : f.obj?.patches?.length ? `${f.obj.patches.length}p` : "";
+        const sub = f.obj?.action ? safeStringify(f.obj.args || []).slice(0, 80) : f.obj?.patches?.length ? `${f.obj.patches.length}p` : "";
         return `<div class="fr ${f.dir}" data-idx="${liveFrames.length - 1 - i}" data-tag="${tag.replace(/"/g, "&quot;")}"><span class="ts">${ts}</span><span class="badge">${f.dir}</span><span class="tg">${tag} <span style="color:#64748b">${sub}</span></span><span class="ts">${f.len}b</span><span class="cpy hide-btn" title="ocultar tipo/action">\u{1F6AB}</span></div>`;
       }).join("") || '<div style="color:#64748b">sem frames (ou todos filtrados)</div>';
       box.querySelectorAll(".fr").forEach((el) => {
@@ -1626,7 +1651,7 @@
           }
           const idx = +el.dataset.idx;
           selectedFrame = liveFrames[idx];
-          panel.querySelector("#gc-fdetail").textContent = JSON.stringify(selectedFrame.obj, null, 2).slice(0, 6e3);
+          panel.querySelector("#gc-fdetail").textContent = safeStringify(selectedFrame.obj, null, 2).slice(0, 6e3);
         };
       });
     };
@@ -1653,11 +1678,11 @@
     };
     panel.querySelector("#gc-fcopy").onclick = () => {
       if (!selectedFrame) return showToast("selecione frame");
-      copyToClipboard(JSON.stringify(selectedFrame.obj, null, 2), "frame copiado");
+      copyToClipboard(safeStringify(selectedFrame.obj, null, 2), "frame copiado");
     };
     panel.querySelector("#gc-fexport").onclick = () => {
       if (!selectedFrame) return;
-      const blob = new Blob([JSON.stringify(selectedFrame.obj, null, 2)], { type: "application/json" });
+      const blob = new Blob([safeStringify(selectedFrame.obj, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `frame-${Date.now()}.json`;
@@ -1665,7 +1690,7 @@
     };
     const goToDiscWithArgs = (name, lastArgs) => {
       panel.querySelector("#gc-rawname").value = name;
-      panel.querySelector("#gc-rawargs").value = JSON.stringify(lastArgs?.slice(2) || [], null, 2);
+      panel.querySelector("#gc-rawargs").value = safeStringify(lastArgs?.slice(2) || [], null, 2);
       panel.querySelectorAll(".tab").forEach((x) => x.classList.remove("on"));
       panel.querySelectorAll(".pane").forEach((x) => x.classList.remove("on"));
       panel.querySelector('.tab[data-tab="disc"]').classList.add("on");
@@ -1693,7 +1718,7 @@
           showToast("replay " + name);
         };
         p.querySelector(".cpy").onclick = () => {
-          const json = JSON.stringify({ type: "Action", action: name, args: info.lastArgs }, null, 2);
+          const json = safeStringify({ type: "Action", action: name, args: info.lastArgs }, null, 2);
           copyToClipboard(json, "action JSON copiada");
         };
         aBox.appendChild(p);
@@ -1742,16 +1767,16 @@
       const obj = buildRawObj();
       if (!obj) return;
       sendRaw(obj);
-      panel.querySelector("#gc-rawres").textContent = "sent. txnId=" + obj.txnId.slice(0, 8) + "...\n" + JSON.stringify(obj, null, 2);
+      panel.querySelector("#gc-rawres").textContent = "sent. txnId=" + obj.txnId.slice(0, 8) + "...\n" + safeStringify(obj, null, 2);
       setTimeout(() => {
         const r = actionLog.find((l) => l.action === obj.action && Math.abs(l.t - Date.now()) < 3e3);
-        if (r) panel.querySelector("#gc-rawres").textContent = JSON.stringify(r, null, 2);
+        if (r) panel.querySelector("#gc-rawres").textContent = safeStringify(r, null, 2);
       }, 500);
     };
     panel.querySelector("#gc-rawcopy").onclick = () => {
       const obj = buildRawObj();
       if (!obj) return;
-      copyToClipboard(JSON.stringify(obj, null, 2), "JSON copiado");
+      copyToClipboard(safeStringify(obj, null, 2), "JSON copiado");
     };
     const redetectUserId = () => {
       const fromUrl = new URL(location.href).searchParams.get("userId");

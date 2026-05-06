@@ -1,4 +1,4 @@
-import { uuid, extToStr, h2b } from './util.js';
+import { uuid, extToStr, h2b, safeStringify } from './util.js';
 import css from './styles.css';
 import templateHtml from './template.html';
 
@@ -313,6 +313,10 @@ export async function boot() {
       return [...merged.values()];
     },
 
+    // join meeting area (server teleporta automaticamente)
+    joinMeeting: () => act('updateTargetMeetingArea', [{}]),
+    joinMeetingAs: tid => actOn(tid, 'updateTargetMeetingArea', [{}]),
+
     // teleport entre maps/rooms (mesmo space)
     teleportToMap: (mapId, x=5, y=5, d='Down') => act('teleport', [{ x, y, direction: d, mapId }]),
     teleportToArea: areaId => {
@@ -407,7 +411,7 @@ export async function boot() {
   // Favoritas
   const favKey = `gather-ctl-favs-${spaceId}`;
   const loadFavs = () => { try { return JSON.parse(localStorage.getItem(favKey) || '{}'); } catch { return {}; } };
-  const saveFavs = favs => localStorage.setItem(favKey, JSON.stringify(favs));
+  const saveFavs = favs => localStorage.setItem(favKey, safeStringify(favs));
   ctl.saveFav = slot => {
     const favs = loadFavs();
     favs[slot] = { x: state.myPos.x, y: state.myPos.y, d: state.myPos.direction, m: state.myPos.mapId };
@@ -522,7 +526,7 @@ export async function boot() {
   panel.querySelector('#gc-cpid').onclick = () => copyToClipboard(userId, 'userId copiado');
   panel.querySelector('#gc-cppos').onclick = () => {
     const p = state.myPos;
-    copyToClipboard(JSON.stringify({ x: p.x, y: p.y, direction: p.direction, mapId: p.mapId }), 'pos copiada');
+    copyToClipboard(safeStringify({ x: p.x, y: p.y, direction: p.direction, mapId: p.mapId }), 'pos copiada');
   };
   panel.querySelector('#gc-confetti').onclick = () => ctl.confetti();
   panel.querySelector('#gc-shake').onclick = () => ctl.shakeCamera(15, 1500);
@@ -652,7 +656,7 @@ export async function boot() {
     copyToClipboard(txt, `${chatLog.length} msgs copiadas`);
   };
   panel.querySelector('#gc-chat-export').onclick = () => {
-    const blob = new Blob([JSON.stringify(chatLog, null, 2)], { type: 'application/json' });
+    const blob = new Blob([safeStringify(chatLog, null, 2)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `chat-${Date.now()}.json`; a.click();
   };
   panel.querySelector('#gc-chat-send').onclick = () => {
@@ -775,13 +779,14 @@ export async function boot() {
   panel.querySelector('#gc-rmunlockall').onclick = () => ctl.unlockAll();
   panel.querySelector('#gc-rmdump').onclick = () => {
     const arr = ctl.dumpAreas();
-    copyToClipboard(JSON.stringify(arr, null, 2), `${arr.length} áreas copiadas`);
+    copyToClipboard(safeStringify(arr, null, 2), `${arr.length} áreas copiadas`);
     console.table(arr);
   };
   const rmId = () => panel.querySelector('#gc-rmid').value.trim();
   panel.querySelector('#gc-rmlock').onclick = () => { const id=rmId(); if (id) ctl.lockArea(id); };
   panel.querySelector('#gc-rmunlock').onclick = () => { const id=rmId(); if (id) ctl.unlockArea(id); };
   panel.querySelector('#gc-rmtoggle').onclick = () => { const id=rmId(); if (id) ctl.toggleAreaLock(id); };
+  panel.querySelector('#gc-jmgo').onclick = () => { ctl.joinMeeting(); showToast('joinMeeting enviado'); };
   panel.querySelector('#gc-esgo').onclick = () => {
     const t = panel.querySelector('#gc-esid').value.trim() || panel.querySelector('#gc-uid').value.trim();
     if (!t) return showToast('targetUserId?');
@@ -857,7 +862,7 @@ export async function boot() {
   let selectedFrame = null;
   const hiddenKey = `gather-ctl-hidden-${spaceId}`;
   const loadHidden = () => { try { return new Set(JSON.parse(localStorage.getItem(hiddenKey) || '[]')); } catch { return new Set(); } };
-  const saveHidden = set => localStorage.setItem(hiddenKey, JSON.stringify([...set]));
+  const saveHidden = set => localStorage.setItem(hiddenKey, safeStringify([...set]));
   const hiddenTags = loadHidden();
   const frameTag = f => f.obj?.action || f.obj?.type || '?';
   const hideTag = tag => { hiddenTags.add(tag); saveHidden(hiddenTags); renderHiddenChips(); renderFrames(); };
@@ -891,7 +896,7 @@ export async function boot() {
       if (dir !== 'all' && f.dir !== dir) return false;
       const tag = frameTag(f);
       if (hiddenTags.has(tag)) return false;
-      const full = tag + ' ' + JSON.stringify(f.obj?.args||'').slice(0,200);
+      const full = tag + ' ' + safeStringify(f.obj?.args||'').slice(0,200);
       if (re && !re.test(full)) return false;
       if (hideRe && hideRe.test(full)) return false;
       return true;
@@ -899,7 +904,7 @@ export async function boot() {
     box.innerHTML = arr.map((f, i) => {
       const ts = new Date(f.t).toTimeString().slice(0,8);
       const tag = frameTag(f);
-      const sub = f.obj?.action ? JSON.stringify(f.obj.args||[]).slice(0,80) : (f.obj?.patches?.length ? `${f.obj.patches.length}p` : '');
+      const sub = f.obj?.action ? safeStringify(f.obj.args||[]).slice(0,80) : (f.obj?.patches?.length ? `${f.obj.patches.length}p` : '');
       return `<div class="fr ${f.dir}" data-idx="${liveFrames.length - 1 - i}" data-tag="${tag.replace(/"/g,'&quot;')}"><span class="ts">${ts}</span><span class="badge">${f.dir}</span><span class="tg">${tag} <span style="color:#64748b">${sub}</span></span><span class="ts">${f.len}b</span><span class="cpy hide-btn" title="ocultar tipo/action">🚫</span></div>`;
     }).join('') || '<div style="color:#64748b">sem frames (ou todos filtrados)</div>';
     box.querySelectorAll('.fr').forEach(el => {
@@ -912,7 +917,7 @@ export async function boot() {
         }
         const idx = +el.dataset.idx;
         selectedFrame = liveFrames[idx];
-        panel.querySelector('#gc-fdetail').textContent = JSON.stringify(selectedFrame.obj, null, 2).slice(0, 6000);
+        panel.querySelector('#gc-fdetail').textContent = safeStringify(selectedFrame.obj, null, 2).slice(0, 6000);
       };
     });
   };
@@ -927,18 +932,18 @@ export async function boot() {
   };
   panel.querySelector('#gc-fcopy').onclick = () => {
     if (!selectedFrame) return showToast('selecione frame');
-    copyToClipboard(JSON.stringify(selectedFrame.obj, null, 2), 'frame copiado');
+    copyToClipboard(safeStringify(selectedFrame.obj, null, 2), 'frame copiado');
   };
   panel.querySelector('#gc-fexport').onclick = () => {
     if (!selectedFrame) return;
-    const blob = new Blob([JSON.stringify(selectedFrame.obj, null, 2)], { type: 'application/json' });
+    const blob = new Blob([safeStringify(selectedFrame.obj, null, 2)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `frame-${Date.now()}.json`; a.click();
   };
 
   // ==================== discover ====================
   const goToDiscWithArgs = (name, lastArgs) => {
     panel.querySelector('#gc-rawname').value = name;
-    panel.querySelector('#gc-rawargs').value = JSON.stringify(lastArgs?.slice(2) || [], null, 2);
+    panel.querySelector('#gc-rawargs').value = safeStringify(lastArgs?.slice(2) || [], null, 2);
     panel.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
     panel.querySelectorAll('.pane').forEach(x => x.classList.remove('on'));
     panel.querySelector('.tab[data-tab="disc"]').classList.add('on');
@@ -962,7 +967,7 @@ export async function boot() {
         showToast('replay ' + name);
       };
       p.querySelector('.cpy').onclick = () => {
-        const json = JSON.stringify({ type: 'Action', action: name, args: info.lastArgs }, null, 2);
+        const json = safeStringify({ type: 'Action', action: name, args: info.lastArgs }, null, 2);
         copyToClipboard(json, 'action JSON copiada');
       };
       aBox.appendChild(p);
@@ -999,15 +1004,15 @@ export async function boot() {
   panel.querySelector('#gc-rawsend').onclick = () => {
     const obj = buildRawObj(); if (!obj) return;
     sendRaw(obj);
-    panel.querySelector('#gc-rawres').textContent = 'sent. txnId=' + obj.txnId.slice(0,8) + '...\n' + JSON.stringify(obj, null, 2);
+    panel.querySelector('#gc-rawres').textContent = 'sent. txnId=' + obj.txnId.slice(0,8) + '...\n' + safeStringify(obj, null, 2);
     setTimeout(() => {
       const r = actionLog.find(l => l.action === obj.action && Math.abs(l.t - Date.now()) < 3000);
-      if (r) panel.querySelector('#gc-rawres').textContent = JSON.stringify(r, null, 2);
+      if (r) panel.querySelector('#gc-rawres').textContent = safeStringify(r, null, 2);
     }, 500);
   };
   panel.querySelector('#gc-rawcopy').onclick = () => {
     const obj = buildRawObj(); if (!obj) return;
-    copyToClipboard(JSON.stringify(obj, null, 2), 'JSON copiado');
+    copyToClipboard(safeStringify(obj, null, 2), 'JSON copiado');
   };
 
   // ==================== watchdog / auto-recover ====================

@@ -1,6 +1,18 @@
 // Shared helpers.
 export const uuid = () => crypto.randomUUID();
 
+// JSON.stringify replacer that handles BigInt + Map + Set + circular-safe.
+const bigintReplacer = (_k, v) => {
+  if (typeof v === 'bigint') return v.toString() + 'n';
+  if (v instanceof Map) return Object.fromEntries(v);
+  if (v instanceof Set) return [...v];
+  return v;
+};
+export const safeStringify = (obj, indent) => {
+  try { return JSON.stringify(obj, bigintReplacer, indent); }
+  catch (e) { return `[serialize error: ${e.message}]`; }
+};
+
 export const h2b = h => {
   const b = new Uint8Array(h.length / 2);
   for (let i = 0; i < b.length; i++) b[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
