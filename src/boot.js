@@ -144,12 +144,14 @@ export async function boot() {
         if (id) {
           const rec = state.mapAreas.get(id) || { id };
           if (p.data && typeof p.data === 'object') {
-            for (const k of ['name','locked','mapId','type','areaType','x','y','width','height']) {
-              if (p.data[k] !== undefined) rec[k] = p.data[k];
-            }
+            // captura tudo — geometria pode estar em campos variados
+            Object.assign(rec, p.data);
+            rec.id = id;
           }
-          if (p.op === 'replace' && p.path === '/locked') rec.locked = p.value;
-          if (p.op === 'replace' && p.path === '/name') rec.name = p.value;
+          if (p.op === 'replace' && p.path) {
+            const key = p.path.replace(/^\//, '').split('/')[0];
+            if (key) rec[key] = p.value !== undefined ? p.value : p.data;
+          }
           if (p.op === 'remove' && p.path === '') { state.mapAreas.delete(id); }
           else state.mapAreas.set(id, rec);
         }
@@ -319,12 +321,31 @@ export async function boot() {
 
     // teleport entre maps/rooms (mesmo space)
     teleportToMap: (mapId, x=5, y=5, d='Down') => act('teleport', [{ x, y, direction: d, mapId }]),
-    teleportToArea: areaId => {
+    teleportToArea: (areaId, strategy='auto') => {
       const a = state.mapAreas.get(areaId);
-      if (!a) { console.warn('area not in state:', areaId); return; }
-      const cx = Math.floor((a.x||0) + ((a.width||1)/2));
-      const cy = Math.floor((a.y||0) + ((a.height||1)/2));
-      return act('teleport', [{ x: cx, y: cy, direction: 'Down', mapId: a.mapId || state.myPos.mapId }]);
+      if (!a) { console.warn('[tpArea] area não encontrada no state:', areaId); return; }
+      console.log('[tpArea] area data:', a);
+
+      // estratégia 1: usar boundary/bounds/region/rect se existir
+      const geom = a.boundary || a.bounds || a.region || a.rect || a;
+      const x = geom.x ?? geom.left ?? geom.minX;
+      const y = geom.y ?? geom.top ?? geom.minY;
+      const w = geom.width ?? geom.w ?? ((geom.maxX!=null && geom.minX!=null) ? geom.maxX-geom.minX : null);
+      const h = geom.height ?? geom.h ?? ((geom.maxY!=null && geom.minY!=null) ? geom.maxY-geom.minY : null);
+
+      if (strategy === 'meeting' || a.areaType === 'meeting' || a.type === 'meeting') {
+        console.log('[tpArea] tentando updateTargetMeetingArea com areaId');
+        return act('updateTargetMeetingArea', [{ areaId, mapAreaId: areaId }]);
+      }
+      if (x != null && y != null && w != null && h != null) {
+        const cx = Math.floor(x + w/2);
+        const cy = Math.floor(y + h/2);
+        const mapId = a.mapId || state.myPos.mapId;
+        console.log(`[tpArea] teleport (${cx},${cy}) mapId=${mapId}`);
+        return act('teleport', [{ x: cx, y: cy, direction: 'Down', mapId }]);
+      }
+      console.warn('[tpArea] sem geometria, tentando updateTargetMeetingArea fallback');
+      return act('updateTargetMeetingArea', [{ areaId, mapAreaId: areaId }]);
     },
     dumpMaps: () => [...state.maps.values()],
 
