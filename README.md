@@ -1,6 +1,6 @@
 # Gather Controller
 
-Userscript pra controlar Gather.town via WebSocket. Painel glass com self/auto/prof/chat/admin/watch/inspector/discover/rooms.
+Userscript pra controlar Gather.town via WebSocket. Painel glass com self/auto/prof/watch/inspector/discover/rooms.
 
 ## Instalar
 
@@ -37,11 +37,9 @@ npm run watch      # rebuild ao salvar src/
 
 ## Features
 
-- **self**: move/face/teleport/walk-to/recorder/favoritas (F1-F9)
+- **self**: move/face/teleport/walk-to/recorder/favoritas
 - **auto**: spin/walk/dance/random/tp-loop (toggles independentes)
 - **prof**: name/emoji/text status/title/pronouns/emote
-- **chat**: histórico + envio + export
-- **admin**: teleport/face/move/mute/follow/spotlight/ghost/block/kick/ban (precisa permissão server)
 - **watch**: alerta quando user entra (bip + notif desktop)
 - **insp**: live frame inspector com regex include/exclude
 - **disc**: actions/models/types vistos + envio raw
@@ -58,11 +56,3 @@ ctl.dumpAreas() / ctl.dumpMaps()
 ctl.raw({ type: 'Action', action: '...', args: [...] })
 ctl.healthCheck()
 ```
-
-## Keybinds
-
-- `Ctrl+G` — toggle painel
-- `M` — pill mode
-- `S` — stop all loops
-- `F1-F9` — tp pra favorita slot N
-- `Shift+F1-F9` — salva pos atual em slot N

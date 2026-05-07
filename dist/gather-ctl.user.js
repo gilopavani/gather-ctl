@@ -235,8 +235,8 @@
     <div><span id="gc-dot" class="dot" title="health"></span><span class="title">Gather</span><span id="gc-pos" class="pos"></span></div>
     <div class="ctrl">
       <button id="gc-recon" title="reconectar/recarregar listeners">\u21BB</button>
-      <button id="gc-min" data-act="min" title="minimizar (M)">\u2014</button>
-      <button id="gc-hide" title="esconder (Ctrl+G)">\xD7</button>
+      <button id="gc-min" data-act="min" title="minimizar">\u2014</button>
+      <button id="gc-hide" title="esconder">\xD7</button>
     </div>
   </div>
   <div class="main">
@@ -244,8 +244,6 @@
       <div class="tab on" data-tab="self"><div class="ico">\u{1F579}</div><div class="tablabel">self</div></div>
       <div class="tab" data-tab="auto"><div class="ico">\u267B</div><div class="tablabel">auto</div></div>
       <div class="tab" data-tab="prof"><div class="ico">\u{1F464}</div><div class="tablabel">prof</div></div>
-      <div class="tab" data-tab="chat"><div class="ico">\u{1F4AC}</div><div class="tablabel">chat</div></div>
-      <div class="tab" data-tab="admin"><div class="ico">\u2699</div><div class="tablabel">admin</div></div>
       <div class="tab" data-tab="watch"><div class="ico">\u{1F441}</div><div class="tablabel">watch</div></div>
       <div class="tab" data-tab="insp"><div class="ico">\u{1F50D}</div><div class="tablabel">insp</div></div>
       <div class="tab" data-tab="disc"><div class="ico">\u{1F9EA}</div><div class="tablabel">disc</div></div>
@@ -323,46 +321,6 @@
           <button data-emote="cry">\u{1F622}</button><button data-emote="laugh">\u{1F602}</button>
           <button data-emote="clap">\u{1F44F}</button><button data-emote="party">\u{1F973}</button>
         </div>
-      </div>
-
-      <div class="pane" data-pane="chat">
-        <div class="label">hist\xF3rico (<span id="gc-chatcount">0</span>)</div>
-        <div id="gc-chatbox" class="chatbox"></div>
-        <div class="row" style="margin-top:4px">
-          <button id="gc-chat-clear" class="tiny stop">clear</button>
-          <button id="gc-chat-copy" class="tiny">\u{1F4CB} copy all</button>
-          <button id="gc-chat-export" class="tiny">\u2B07 export</button>
-        </div>
-        <div class="label">enviar mensagem global</div>
-        <textarea id="gc-chat-in" placeholder="msg"></textarea>
-        <button id="gc-chat-send" class="go" style="width:100%;margin-top:4px">\u{1F4E8} enviar</button>
-      </div>
-
-      <div class="pane" data-pane="admin">
-        <div class="label">\u26A0 alvo</div>
-        <div class="row"><input id="gc-uid" class="wide" placeholder="userId alvo"></div>
-        <div class="label">teleport alvo</div>
-        <div class="row">x<input id="gc-ax" value="10">y<input id="gc-ay" value="10"><button id="gc-tpu" class="adm">tp</button></div>
-        <div class="label">virar alvo</div>
-        <div class="grid4"><button data-fu="Up" class="adm">\u2191</button><button data-fu="Left" class="adm">\u2190</button><button data-fu="Down" class="adm">\u2193</button><button data-fu="Right" class="adm">\u2192</button></div>
-        <div class="label">mover alvo</div>
-        <div class="grid4"><button data-mu="Up" class="adm">\u2191</button><button data-mu="Left" class="adm">\u2190</button><button data-mu="Down" class="adm">\u2193</button><button data-mu="Right" class="adm">\u2192</button></div>
-        <div class="label">force-mute</div>
-        <div class="grid4">
-          <button data-mk="audio" class="adm">\u{1F3A4}</button><button data-mk="video" class="adm">\u{1F4F7}</button>
-          <button data-mk="screen" class="adm">\u{1F5A5}</button><button data-mk="sound" class="adm">\u{1F50A}</button>
-        </div>
-        <div class="label">a\xE7\xF5es</div>
-        <div class="grid">
-          <button id="gc-ufollow" class="adm">follow</button><button id="gc-uunfollow" class="adm">unfollow</button>
-          <button id="gc-uspot" class="adm">\u2B50 spot</button><button id="gc-uunspot" class="adm">unspot</button>
-          <button id="gc-ughost" class="adm">\u{1F47B} ghost</button><button id="gc-uunghost" class="adm">unghost</button>
-          <button id="gc-uwave" class="adm">\u{1F44B} wave</button><button id="gc-uring" class="adm">\u{1F514} ring</button>
-          <button id="gc-ublock" class="adm">\u{1F6AB} block</button><button id="gc-uunblock" class="adm">unblock</button>
-          <button id="gc-ukick" class="stop">kick</button><button id="gc-uban" class="stop">ban</button>
-        </div>
-        <div class="label">log actions</div>
-        <div id="gc-actionlog" class="actionlog"></div>
       </div>
 
       <div class="pane" data-pane="watch">
@@ -459,7 +417,7 @@
         <div class="sep"></div>
         <div class="label">enterSpace (alvo SpaceUser)</div>
         <div class="row">
-          <input id="gc-esid" class="wide" placeholder="targetUserId (ou usa alvo do admin)">
+          <input id="gc-esid" class="wide" placeholder="targetUserId">
           <button id="gc-esgo" class="go tiny">go</button>
         </div>
         <div class="label">loadSpaceUser</div>
@@ -1276,130 +1234,6 @@
     panel.querySelector("#gc-ptitle-set").onclick = () => ctl.setTitle(panel.querySelector("#gc-ptitle").value);
     panel.querySelector("#gc-ppron-set").onclick = () => ctl.setPronouns(panel.querySelector("#gc-ppron").value);
     panel.querySelectorAll("[data-emote]").forEach((b) => b.onclick = () => ctl.emote(b.dataset.emote));
-    const renderChat = () => {
-      const box = panel.querySelector("#gc-chatbox");
-      if (!box) return;
-      panel.querySelector("#gc-chatcount").textContent = chatLog.length;
-      const last = chatLog.slice(-150);
-      const scrollAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-      box.innerHTML = last.map((m) => {
-        const ts = new Date(m.t).toTimeString().slice(0, 8);
-        const u = !m.fromMe ? state.users.get(m.from) : null;
-        const name = m.fromMe ? "eu" : u?.name || (m.from || "?").slice(0, 8);
-        const rec = m.recipient && m.recipient !== "global" ? ` \u2192 ${m.recipient.slice(0, 10)}` : "";
-        const text = (m.text || "").toString().replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-        return `<div class="cm ${m.fromMe ? "me" : ""}"><span class="ts">${ts}</span><span class="who">${name}${rec}:</span>${text}</div>`;
-      }).join("") || '<div style="color:#64748b">sem mensagens ainda</div>';
-      if (scrollAtBottom) box.scrollTop = box.scrollHeight;
-    };
-    panel.querySelector("#gc-chat-clear").onclick = () => {
-      chatLog.length = 0;
-      renderChat();
-    };
-    panel.querySelector("#gc-chat-copy").onclick = () => {
-      const txt = chatLog.map((m) => {
-        const ts = new Date(m.t).toISOString();
-        const name = m.fromMe ? "me" : state.users.get(m.from)?.name || m.from;
-        return `[${ts}] ${name}: ${m.text}`;
-      }).join("\n");
-      copyToClipboard(txt, `${chatLog.length} msgs copiadas`);
-    };
-    panel.querySelector("#gc-chat-export").onclick = () => {
-      const blob = new Blob([safeStringify(chatLog, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `chat-${Date.now()}.json`;
-      a.click();
-    };
-    panel.querySelector("#gc-chat-send").onclick = () => {
-      const el = panel.querySelector("#gc-chat-in");
-      const v = el.value.trim();
-      if (v) {
-        ctl.chat(v);
-        el.value = "";
-        showToast("msg enviada");
-      }
-    };
-    panel.querySelector("#gc-chat-in").addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        panel.querySelector("#gc-chat-send").click();
-      }
-    });
-    setInterval(renderChat, 1500);
-    renderChat();
-    const needsTid = () => {
-      const tid = panel.querySelector("#gc-uid").value.trim();
-      if (!tid) {
-        showToast("cola userId alvo");
-        return null;
-      }
-      return tid;
-    };
-    panel.querySelector("#gc-tpu").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.teleportUser(t, +panel.querySelector("#gc-ax").value, +panel.querySelector("#gc-ay").value);
-    };
-    panel.querySelectorAll("[data-fu]").forEach((b) => b.onclick = () => {
-      const t = needsTid();
-      if (t) ctl.faceUser(t, b.dataset.fu);
-    });
-    panel.querySelectorAll("[data-mu]").forEach((b) => b.onclick = () => {
-      const t = needsTid();
-      if (t) ctl.moveUser(t, b.dataset.mu);
-    });
-    panel.querySelectorAll("[data-mk]").forEach((b) => b.onclick = () => {
-      const t = needsTid();
-      if (t) ctl.forceMute(t, b.dataset.mk);
-    });
-    panel.querySelector("#gc-ufollow").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.followUser(t);
-    };
-    panel.querySelector("#gc-uunfollow").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.unfollowUser(t);
-    };
-    panel.querySelector("#gc-uspot").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.spotlightUser(t, true);
-    };
-    panel.querySelector("#gc-uunspot").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.spotlightUser(t, false);
-    };
-    panel.querySelector("#gc-ughost").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.ghostUser(t, true);
-    };
-    panel.querySelector("#gc-uunghost").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.ghostUser(t, false);
-    };
-    panel.querySelector("#gc-uwave").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.wave(t);
-    };
-    panel.querySelector("#gc-uring").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.ring(t);
-    };
-    panel.querySelector("#gc-ublock").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.blockUser(t, true);
-    };
-    panel.querySelector("#gc-uunblock").onclick = () => {
-      const t = needsTid();
-      if (t) ctl.blockUser(t, false);
-    };
-    panel.querySelector("#gc-ukick").onclick = () => {
-      const t = needsTid();
-      if (t && confirm(`kick ${t}?`)) ctl.kickUser(t);
-    };
-    panel.querySelector("#gc-uban").onclick = () => {
-      const t = needsTid();
-      if (t && confirm(`BAN ${t}? irrevers\xEDvel`)) ctl.banUser(t);
-    };
     const renderWatchList = () => {
       const box = panel.querySelector("#gc-watchlist");
       box.innerHTML = "";
@@ -1436,7 +1270,6 @@
         row.innerHTML = `<span class="nm" title="${u.id}">${u.name}${u.id === userId ? " (eu)" : ""} ${status}</span><span class="co">${u.x ?? "?"},${u.y ?? "?"}</span>`;
         row.onclick = () => {
           navigator.clipboard?.writeText(u.id);
-          panel.querySelector("#gc-uid").value = u.id;
           panel.querySelector("#gc-fid").value = u.id;
           panel.querySelector("#gc-rawtid").value = u.id;
           showToast("id copiado: " + u.name);
@@ -1512,7 +1345,7 @@
       showToast("joinMeeting enviado");
     };
     panel.querySelector("#gc-esgo").onclick = () => {
-      const t = panel.querySelector("#gc-esid").value.trim() || panel.querySelector("#gc-uid").value.trim();
+      const t = panel.querySelector("#gc-esid").value.trim();
       if (!t) return showToast("targetUserId?");
       ctl.enterSpace(t);
     };
@@ -1585,18 +1418,6 @@
       const m = panel.querySelector("#gc-mymap");
       if (m) m.textContent = state.myPos.mapId || "?";
     }, 500);
-    const renderActionLog = () => {
-      const box = panel.querySelector("#gc-actionlog");
-      if (!box) return;
-      const last = actionLog.slice(-15).reverse();
-      box.innerHTML = last.map((l) => {
-        const color = l.result === "Success" ? "#4ade80" : "#ef4444";
-        const time = new Date(l.t).toLocaleTimeString();
-        const err = l.error ? `<div style="color:#fbbf24;padding-left:8px;font-size:9px">${l.error.replace(/</g, "&lt;")}</div>` : "";
-        return `<div style="color:${color};border-bottom:1px solid rgba(148,163,184,.08);padding:2px 0">[${time}] ${l.action} \u2192 ${l.result}${err}</div>`;
-      }).join("") || '<div style="color:#64748b">sem actions ainda</div>';
-    };
-    setInterval(renderActionLog, 1e3);
     let inspectorPaused = false;
     let selectedFrame = null;
     const hiddenKey = `gather-ctl-hidden-${spaceId}`;
@@ -1884,40 +1705,7 @@
     }, 1e3);
     ctl.healthCheck = () => ({ ...health, ws: !!getLiveGatherWS(), users: state.users.size, frames: liveFrames.length, panel: document.body.contains(root) });
     ctl.reconnect = reconnect;
-    window.addEventListener("keydown", (e) => {
-      if (e.target.matches("input,textarea")) return;
-      if (e.ctrlKey && e.key.toLowerCase() === "g") {
-        e.preventDefault();
-        root.style.display = root.style.display === "none" ? "" : "none";
-        fab.classList.toggle("on");
-        return;
-      }
-      if (e.ctrlKey || e.metaKey) return;
-      const k = e.key.toLowerCase();
-      if (k === "m" && !e.shiftKey) {
-        e.preventDefault();
-        setPillMode(!panel.classList.contains("pill"));
-      } else if (k === "s" && !e.shiftKey) {
-        stopAll();
-        refreshToggles();
-        showToast("all stopped");
-      } else if (/^f\d$/i.test(e.key)) {
-        const slot = parseInt(e.key.slice(1), 10);
-        if (slot >= 1 && slot <= 9) {
-          if (e.shiftKey) {
-            ctl.saveFav(slot);
-            renderFavs();
-            showToast("fav " + slot + " saved");
-          } else {
-            ctl.tpFav(slot);
-            showToast("tp fav " + slot);
-          }
-          e.preventDefault();
-        }
-      }
-    });
     console.log("[GatherCtl v4] ready. window.__gatherCtl");
-    console.log("Keybinds: S=stop-all, M=minimize-toggle, F1-F9=tp fav, Shift+F1-F9=salva fav, Ctrl+G=toggle UI");
   }
 
   // src/main.js

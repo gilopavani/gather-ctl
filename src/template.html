@@ -3,8 +3,8 @@
     <div><span id="gc-dot" class="dot" title="health"></span><span class="title">Gather</span><span id="gc-pos" class="pos"></span></div>
     <div class="ctrl">
       <button id="gc-recon" title="reconectar/recarregar listeners">↻</button>
-      <button id="gc-min" data-act="min" title="minimizar (M)">—</button>
-      <button id="gc-hide" title="esconder (Ctrl+G)">×</button>
+      <button id="gc-min" data-act="min" title="minimizar">—</button>
+      <button id="gc-hide" title="esconder">×</button>
     </div>
   </div>
   <div class="main">
@@ -12,8 +12,6 @@
       <div class="tab on" data-tab="self"><div class="ico">🕹</div><div class="tablabel">self</div></div>
       <div class="tab" data-tab="auto"><div class="ico">♻</div><div class="tablabel">auto</div></div>
       <div class="tab" data-tab="prof"><div class="ico">👤</div><div class="tablabel">prof</div></div>
-      <div class="tab" data-tab="chat"><div class="ico">💬</div><div class="tablabel">chat</div></div>
-      <div class="tab" data-tab="admin"><div class="ico">⚙</div><div class="tablabel">admin</div></div>
       <div class="tab" data-tab="watch"><div class="ico">👁</div><div class="tablabel">watch</div></div>
       <div class="tab" data-tab="insp"><div class="ico">🔍</div><div class="tablabel">insp</div></div>
       <div class="tab" data-tab="disc"><div class="ico">🧪</div><div class="tablabel">disc</div></div>
@@ -91,46 +89,6 @@
           <button data-emote="cry">😢</button><button data-emote="laugh">😂</button>
           <button data-emote="clap">👏</button><button data-emote="party">🥳</button>
         </div>
-      </div>
-
-      <div class="pane" data-pane="chat">
-        <div class="label">histórico (<span id="gc-chatcount">0</span>)</div>
-        <div id="gc-chatbox" class="chatbox"></div>
-        <div class="row" style="margin-top:4px">
-          <button id="gc-chat-clear" class="tiny stop">clear</button>
-          <button id="gc-chat-copy" class="tiny">📋 copy all</button>
-          <button id="gc-chat-export" class="tiny">⬇ export</button>
-        </div>
-        <div class="label">enviar mensagem global</div>
-        <textarea id="gc-chat-in" placeholder="msg"></textarea>
-        <button id="gc-chat-send" class="go" style="width:100%;margin-top:4px">📨 enviar</button>
-      </div>
-
-      <div class="pane" data-pane="admin">
-        <div class="label">⚠ alvo</div>
-        <div class="row"><input id="gc-uid" class="wide" placeholder="userId alvo"></div>
-        <div class="label">teleport alvo</div>
-        <div class="row">x<input id="gc-ax" value="10">y<input id="gc-ay" value="10"><button id="gc-tpu" class="adm">tp</button></div>
-        <div class="label">virar alvo</div>
-        <div class="grid4"><button data-fu="Up" class="adm">↑</button><button data-fu="Left" class="adm">←</button><button data-fu="Down" class="adm">↓</button><button data-fu="Right" class="adm">→</button></div>
-        <div class="label">mover alvo</div>
-        <div class="grid4"><button data-mu="Up" class="adm">↑</button><button data-mu="Left" class="adm">←</button><button data-mu="Down" class="adm">↓</button><button data-mu="Right" class="adm">→</button></div>
-        <div class="label">force-mute</div>
-        <div class="grid4">
-          <button data-mk="audio" class="adm">🎤</button><button data-mk="video" class="adm">📷</button>
-          <button data-mk="screen" class="adm">🖥</button><button data-mk="sound" class="adm">🔊</button>
-        </div>
-        <div class="label">ações</div>
-        <div class="grid">
-          <button id="gc-ufollow" class="adm">follow</button><button id="gc-uunfollow" class="adm">unfollow</button>
-          <button id="gc-uspot" class="adm">⭐ spot</button><button id="gc-uunspot" class="adm">unspot</button>
-          <button id="gc-ughost" class="adm">👻 ghost</button><button id="gc-uunghost" class="adm">unghost</button>
-          <button id="gc-uwave" class="adm">👋 wave</button><button id="gc-uring" class="adm">🔔 ring</button>
-          <button id="gc-ublock" class="adm">🚫 block</button><button id="gc-uunblock" class="adm">unblock</button>
-          <button id="gc-ukick" class="stop">kick</button><button id="gc-uban" class="stop">ban</button>
-        </div>
-        <div class="label">log actions</div>
-        <div id="gc-actionlog" class="actionlog"></div>
       </div>
 
       <div class="pane" data-pane="watch">
@@ -227,7 +185,7 @@
         <div class="sep"></div>
         <div class="label">enterSpace (alvo SpaceUser)</div>
         <div class="row">
-          <input id="gc-esid" class="wide" placeholder="targetUserId (ou usa alvo do admin)">
+          <input id="gc-esid" class="wide" placeholder="targetUserId">
           <button id="gc-esgo" class="go tiny">go</button>
         </div>
         <div class="label">loadSpaceUser</div>
