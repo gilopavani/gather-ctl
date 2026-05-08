@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gather Controller
 // @namespace    local.gather.ctl
-// @version      4.4.1
+// @version      4.4.2
 // @description  Gather.town WS controller — modular build
 // @match        https://app.v2.gather.town/*
 // @match        https://gather.town/*
@@ -280,7 +280,7 @@
         <div class="label">automa\xE7\xF5es (click = liga/desliga)</div>
         <div class="grid">
           <button class="go toggle" data-loop="spin" data-label="spin">spin</button>
-          <button class="go toggle" data-loop="walk" data-label="walk\u25A1">walk\u25A1</button>
+          <button class="go toggle" data-loop="walk" data-label="spin + \u{1F389}">spin + \u{1F389}</button>
         </div>
         <div class="grid">
           <button class="go toggle" data-loop="dance" data-label="dance">dance</button>
@@ -503,6 +503,7 @@
     };
     const act = (name, tail = []) => sendRaw({ type: "Action", action: name, args: ["SpaceUser", userId, ...tail], txnId: uuid() });
     const actOn = (tid, name, tail = []) => sendRaw({ type: "Action", action: name, args: ["SpaceUser", tid, ...tail], txnId: uuid() });
+    const confettiTargetUserId = "0c637348-7baa-45dc-9157-c7f21487339b";
     const state = {
       users: /* @__PURE__ */ new Map(),
       objects: /* @__PURE__ */ new Map(),
@@ -722,6 +723,7 @@
       // fx / social
       emote: (emote, count = 1) => act("setEmote", [{ emote, count }]),
       confetti: () => act("shootConfetti", []),
+      throwTargetConfetti: () => sendRaw({ type: "Action", action: "throwConfetti", args: ["SpaceUser", confettiTargetUserId] }),
       shakeCamera: (intensity = 10, durationMs = 1e3) => act("fxShakeCamera", [{ mapId: state.myPos.mapId, targetUserId: userId, intensity, durationMs }]),
       wave: (tid) => act("wave", [{ user: tid, isReply: false }]),
       ring: (tid) => act("ring", [{ user: tid }]),
@@ -847,6 +849,14 @@
         }
       }, ms);
     };
+    ctl.spinConfetti = (ms = 200) => {
+      stopLoop("walk");
+      let i = 0;
+      loops.walk = setInterval(() => {
+        ctl.face(DIRS[i++ % 4]);
+        ctl.throwTargetConfetti();
+      }, ms);
+    };
     ctl.randomWalk = (ms = 300) => {
       stopLoop("rand");
       loops.rand = setInterval(() => ctl.move(DIRS[Math.floor(Math.random() * 4)]), ms);
@@ -871,7 +881,7 @@
     };
     ctl.confettiSpam = (ms = 400) => {
       stopLoop("conf");
-      loops.conf = setInterval(() => ctl.confetti(), ms);
+      loops.conf = setInterval(() => ctl.throwTargetConfetti(), ms);
     };
     ctl.walkTo = (tx, ty, ms = 150) => {
       stopLoop("walkto");
@@ -1152,7 +1162,7 @@
           ctl.spin(ms);
           break;
         case "walk":
-          ctl.walkSquare(ms);
+          ctl.spinConfetti(ms);
           break;
         case "dance":
           ctl.dance(ms);

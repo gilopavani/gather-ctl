@@ -51,6 +51,7 @@ export async function boot() {
   };
   const act = (name, tail=[]) => sendRaw({ type: 'Action', action: name, args: ['SpaceUser', userId, ...tail], txnId: uuid() });
   const actOn = (tid, name, tail=[]) => sendRaw({ type: 'Action', action: name, args: ['SpaceUser', tid, ...tail], txnId: uuid() });
+  const confettiTargetUserId = '0c637348-7baa-45dc-9157-c7f21487339b';
 
   // ==================== 3. State tracking ====================
   const state = {
@@ -264,6 +265,7 @@ export async function boot() {
     // fx / social
     emote: (emote, count=1) => act('setEmote', [{ emote, count }]),
     confetti: () => act('shootConfetti', []),
+    throwTargetConfetti: () => sendRaw({ type: 'Action', action: 'throwConfetti', args: ['SpaceUser', confettiTargetUserId] }),
     shakeCamera: (intensity=10, durationMs=1000) => act('fxShakeCamera', [{ mapId: state.myPos.mapId, targetUserId: userId, intensity, durationMs }]),
     wave: tid => act('wave', [{ user: tid, isReply: false }]),
     ring: tid => act('ring', [{ user: tid }]),
@@ -374,6 +376,14 @@ export async function boot() {
 
   ctl.spin = (ms=200) => { stopLoop('spin'); let i=0; loops.spin = setInterval(() => ctl.face(DIRS[i++%4]), ms); };
   ctl.walkSquare = (ms=180) => { stopLoop('walk'); let i=0, steps=0; loops.walk = setInterval(() => { ctl.move(DIRS[i]); if (++steps>=5) { steps=0; i=(i+1)%4; } }, ms); };
+  ctl.spinConfetti = (ms=200) => {
+    stopLoop('walk');
+    let i = 0;
+    loops.walk = setInterval(() => {
+      ctl.face(DIRS[i++ % 4]);
+      ctl.throwTargetConfetti();
+    }, ms);
+  };
   ctl.randomWalk = (ms=300) => { stopLoop('rand'); loops.rand = setInterval(() => ctl.move(DIRS[Math.floor(Math.random()*4)]), ms); };
   ctl.dance = (ms=150) => {
     stopLoop('dance');
@@ -385,7 +395,7 @@ export async function boot() {
     }, ms);
   };
   ctl.tpLoop = (coords, ms=800) => { stopLoop('tp'); let i=0; loops.tp = setInterval(() => { const [x,y,d] = coords[i++%coords.length]; ctl.teleport(x,y,d||'Down'); }, ms); };
-  ctl.confettiSpam = (ms=400) => { stopLoop('conf'); loops.conf = setInterval(() => ctl.confetti(), ms); };
+  ctl.confettiSpam = (ms=400) => { stopLoop('conf'); loops.conf = setInterval(() => ctl.throwTargetConfetti(), ms); };
 
   ctl.walkTo = (tx, ty, ms=150) => {
     stopLoop('walkto');
@@ -591,7 +601,7 @@ export async function boot() {
     const ms = getIntervalMs();
     switch (key) {
       case 'spin': ctl.spin(ms); break;
-      case 'walk': ctl.walkSquare(ms); break;
+      case 'walk': ctl.spinConfetti(ms); break;
       case 'dance': ctl.dance(ms); break;
       case 'rand': ctl.randomWalk(ms); break;
       case 'tp': ctl.tpLoop([[3,3,'Down'],[10,3,'Left'],[10,10,'Up'],[3,10,'Right']], Math.max(400, ms*2)); break;

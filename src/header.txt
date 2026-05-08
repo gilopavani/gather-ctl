@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gather Controller
 // @namespace    local.gather.ctl
-// @version      4.4.1
+// @version      4.4.2
 // @description  Gather.town WS controller — modular build
 // @match        https://app.v2.gather.town/*
 // @match        https://gather.town/*
