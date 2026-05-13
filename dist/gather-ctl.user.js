@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gather Controller
 // @namespace    local.gather.ctl
-// @version      4.4.2
+// @version      4.4.3
 // @description  Gather.town WS controller — modular build
 // @match        https://app.v2.gather.town/*
 // @match        https://gather.town/*
@@ -311,15 +311,37 @@
         <button id="gc-pemo-clear" class="tiny">limpar emoji</button>
         <div class="label">text status</div>
         <div class="row"><input id="gc-ptxt" class="wide" placeholder="hacking"><button id="gc-ptxt-set" class="go tiny">set</button></div>
+        <div class="label">custom status real</div>
+        <div class="row">
+          <input id="gc-custom-text" class="med" placeholder="texto">
+          <input id="gc-custom-mins" value="60" type="number" min="1" max="1440" title="minutos">
+          <button id="gc-custom-set" class="go tiny">set</button>
+        </div>
+        <div class="row">
+          <select id="gc-avail" style="width:auto">
+            <option value="Active">Active</option>
+            <option value="Busy">Busy</option>
+            <option value="DoNotDisturb">DoNotDisturb</option>
+            <option value="Away">Away</option>
+          </select>
+          <button id="gc-avail-set" class="go tiny">availability</button>
+          <button id="gc-custom-clearcal" class="tiny">clear calendar</button>
+        </div>
         <div class="label">title / pronouns</div>
         <div class="row"><input id="gc-ptitle" class="med" placeholder="title"><button id="gc-ptitle-set" class="go tiny">set</button></div>
         <div class="row"><input id="gc-ppron" class="med" placeholder="they/them"><button id="gc-ppron-set" class="go tiny">set</button></div>
+        <div class="label">outfit (JSON saveSpaceOutfit)</div>
+        <textarea id="gc-outfit-json" placeholder='{"skin":"...","hair":"...","top":"..."}'></textarea>
+        <div class="grid">
+          <button id="gc-outfit-last" class="tiny">usar \xFAltimo capturado</button>
+          <button id="gc-outfit-save" class="go tiny">salvar outfit</button>
+        </div>
         <div class="label">emote</div>
         <div class="grid4">
-          <button data-emote="dance">\u{1F483}</button><button data-emote="wave">\u{1F44B}</button>
-          <button data-emote="thumbsup">\u{1F44D}</button><button data-emote="heart">\u2764</button>
-          <button data-emote="cry">\u{1F622}</button><button data-emote="laugh">\u{1F602}</button>
-          <button data-emote="clap">\u{1F44F}</button><button data-emote="party">\u{1F973}</button>
+          <button data-emote="\u{1F44B}">\u{1F44B}</button><button data-emote="\u2764\uFE0F">\u2764\uFE0F</button>
+          <button data-emote="\u2764\uFE0F" data-count="2">\u2764\uFE0F\xD72</button><button data-emote="\u{1F389}">\u{1F389}</button>
+          <button data-emote="\u{1F44D}\uFE0F">\u{1F44D}</button><button data-emote="\u{1F923}">\u{1F923}</button>
+          <button data-emote="\u{1F44F}">\u{1F44F}</button><button data-emote="\u{1F525}">\u{1F525}</button>
         </div>
       </div>
 
@@ -504,6 +526,13 @@
     const act = (name, tail = []) => sendRaw({ type: "Action", action: name, args: ["SpaceUser", userId, ...tail], txnId: uuid() });
     const actOn = (tid, name, tail = []) => sendRaw({ type: "Action", action: name, args: ["SpaceUser", tid, ...tail], txnId: uuid() });
     const confettiTargetUserId = "0c637348-7baa-45dc-9157-c7f21487339b";
+    const normalizeOutfit = (raw) => {
+      const outfit = raw?.type === "Action" && raw?.action === "saveSpaceOutfit" ? raw.args?.[2] : Array.isArray(raw) ? raw[2] : raw;
+      if (!outfit || typeof outfit !== "object" || Array.isArray(outfit)) return null;
+      return Object.fromEntries(Object.entries(outfit).filter(([, v]) => {
+        return !(v && typeof v === "object" && v.__ext === 4 && Array.isArray(v.bytes) && v.bytes.length === 0);
+      }));
+    };
     const state = {
       users: /* @__PURE__ */ new Map(),
       objects: /* @__PURE__ */ new Map(),
@@ -608,7 +637,7 @@
           if (!id) continue;
           const rec = state.users.get(id) || { id };
           if (p.data && typeof p.data === "object") {
-            for (const k of ["name", "emojiStatus", "textStatus", "status", "away", "ghost", "outfitString", "spotlighted"]) {
+            for (const k of ["name", "emojiStatus", "textStatus", "customStatus", "availability", "status", "away", "ghost", "outfitString", "spotlighted"]) {
               if (p.data[k] !== void 0) rec[k] = p.data[k];
             }
             if (p.data.position?.x !== void 0) rec.x = p.data.position.x;
@@ -719,9 +748,26 @@
       setPronouns: (p) => act("setPronouns", [p]),
       setTitle: (t) => act("setTitle", [t]),
       setDescription: (d) => act("setDescription", [d]),
-      setOutfit: (s) => act("setOutfitString", [s]),
+      saveSpaceOutfit: (outfit) => {
+        const normalized = normalizeOutfit(outfit);
+        if (!normalized) return null;
+        return act("saveSpaceOutfit", [normalized]);
+      },
+      setOutfit: (outfit) => ctl.saveSpaceOutfit(outfit),
+      setCustomStatus: ({ text = "", clearMinutes = 60 } = {}) => {
+        const payload = {
+          text,
+          clearCondition: {
+            type: "DateTime",
+            clearAt: new Date(Date.now() + Math.max(1, clearMinutes) * 6e4).toISOString()
+          }
+        };
+        return act("setCustomStatus", [payload]);
+      },
+      clearCalendarInferredStatus: () => act("clearCalendarInferredStatus"),
+      setMyAvailability: (availability = "Active") => act("setAvailability", [{ availability, debugSource: "GatherCtl.profile" }]),
       // fx / social
-      emote: (emote, count = 1) => act("setEmote", [{ emote, count }]),
+      emote: (emote, count = 1) => act("broadcastEmote", [{ emote, count, ambientlyConnectedUserIds: [userId] }]),
       confetti: () => act("shootConfetti", []),
       throwTargetConfetti: () => sendRaw({ type: "Action", action: "throwConfetti", args: ["SpaceUser", confettiTargetUserId] }),
       shakeCamera: (intensity = 10, durationMs = 1e3) => act("fxShakeCamera", [{ mapId: state.myPos.mapId, targetUserId: userId, intensity, durationMs }]),
@@ -746,7 +792,7 @@
       followUser: (tid) => actOn(tid, "follow", [{}]),
       unfollowUser: (tid) => actOn(tid, "unfollow", [{}]),
       forceMute: (tid, mediaKind = "audio") => actOn(tid, "forceMute", [{ mediaKind }]),
-      setAvailability: (tid, availability) => actOn(tid, "setAvailability", [{ availability }]),
+      setAvailability: (tid, availability) => actOn(tid, "setAvailability", [{ availability, debugSource: "GatherCtl.userList" }]),
       spotlightUser: (tid, on = true) => act("setSpotlight", [{ spotlightedUser: tid, isSpotlighted: on }]),
       ghostUser: (tid, on = true) => actOn(tid, "ghost", [{ ghost: on }]),
       blockUser: (tid, on = true) => act("block", [{ blockedUserId: tid, blocked: on }]),
@@ -1243,7 +1289,46 @@
     panel.querySelector("#gc-ptxt-set").onclick = () => ctl.setTextStatus(panel.querySelector("#gc-ptxt").value);
     panel.querySelector("#gc-ptitle-set").onclick = () => ctl.setTitle(panel.querySelector("#gc-ptitle").value);
     panel.querySelector("#gc-ppron-set").onclick = () => ctl.setPronouns(panel.querySelector("#gc-ppron").value);
-    panel.querySelectorAll("[data-emote]").forEach((b) => b.onclick = () => ctl.emote(b.dataset.emote));
+    panel.querySelector("#gc-custom-set").onclick = () => {
+      const text = panel.querySelector("#gc-custom-text").value;
+      const mins = parseInt(panel.querySelector("#gc-custom-mins").value, 10);
+      ctl.setCustomStatus({ text, clearMinutes: isNaN(mins) ? 60 : mins });
+      showToast("status enviado");
+    };
+    panel.querySelector("#gc-custom-clearcal").onclick = () => {
+      ctl.clearCalendarInferredStatus();
+      showToast("calendar status limpo");
+    };
+    panel.querySelector("#gc-avail-set").onclick = () => {
+      const availability = panel.querySelector("#gc-avail").value;
+      ctl.setMyAvailability(availability);
+      showToast("availability " + availability);
+    };
+    panel.querySelector("#gc-outfit-save").onclick = () => {
+      let outfit;
+      try {
+        outfit = JSON.parse(panel.querySelector("#gc-outfit-json").value || "{}");
+      } catch {
+        showToast("outfit JSON inv\xE1lido");
+        return;
+      }
+      const sent = ctl.saveSpaceOutfit(outfit);
+      if (!sent) {
+        showToast("outfit deve ser objeto");
+        return;
+      }
+      showToast("outfit enviado");
+    };
+    panel.querySelector("#gc-outfit-last").onclick = () => {
+      const last = state.actionsSeen.get("saveSpaceOutfit")?.lastArgs?.[2];
+      if (!last) {
+        showToast("sem outfit capturado");
+        return;
+      }
+      panel.querySelector("#gc-outfit-json").value = safeStringify(last, null, 2);
+      showToast("outfit capturado");
+    };
+    panel.querySelectorAll("[data-emote]").forEach((b) => b.onclick = () => ctl.emote(b.dataset.emote, +(b.dataset.count || 1)));
     const renderWatchList = () => {
       const box = panel.querySelector("#gc-watchlist");
       box.innerHTML = "";
@@ -1491,7 +1576,7 @@
         if (hideFilter) hideRe = new RegExp(hideFilter, "i");
       } catch {
       }
-      const arr = liveFrames.slice(-100).reverse().filter((f) => {
+      const arr = liveFrames.map((f, idx) => ({ f, idx })).slice(-100).reverse().filter(({ f }) => {
         if (dir !== "all" && f.dir !== dir) return false;
         const tag = frameTag(f);
         if (hiddenTags.has(tag)) return false;
@@ -1500,11 +1585,11 @@
         if (hideRe && hideRe.test(full)) return false;
         return true;
       });
-      box.innerHTML = arr.map((f, i) => {
+      box.innerHTML = arr.map(({ f, idx }) => {
         const ts = new Date(f.t).toTimeString().slice(0, 8);
         const tag = frameTag(f);
         const sub = f.obj?.action ? safeStringify(f.obj.args || []).slice(0, 80) : f.obj?.patches?.length ? `${f.obj.patches.length}p` : "";
-        return `<div class="fr ${f.dir}" data-idx="${liveFrames.length - 1 - i}" data-tag="${tag.replace(/"/g, "&quot;")}"><span class="ts">${ts}</span><span class="badge">${f.dir}</span><span class="tg">${tag} <span style="color:#64748b">${sub}</span></span><span class="ts">${f.len}b</span><span class="cpy hide-btn" title="ocultar tipo/action">\u{1F6AB}</span></div>`;
+        return `<div class="fr ${f.dir}" data-idx="${idx}" data-tag="${tag.replace(/"/g, "&quot;")}"><span class="ts">${ts}</span><span class="badge">${f.dir}</span><span class="tg">${tag} <span style="color:#64748b">${sub}</span></span><span class="ts">${f.len}b</span><span class="cpy hide-btn" title="ocultar tipo/action">\u{1F6AB}</span></div>`;
       }).join("") || '<div style="color:#64748b">sem frames (ou todos filtrados)</div>';
       box.querySelectorAll(".fr").forEach((el) => {
         el.onclick = (e) => {

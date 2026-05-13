@@ -79,15 +79,37 @@
         <button id="gc-pemo-clear" class="tiny">limpar emoji</button>
         <div class="label">text status</div>
         <div class="row"><input id="gc-ptxt" class="wide" placeholder="hacking"><button id="gc-ptxt-set" class="go tiny">set</button></div>
+        <div class="label">custom status real</div>
+        <div class="row">
+          <input id="gc-custom-text" class="med" placeholder="texto">
+          <input id="gc-custom-mins" value="60" type="number" min="1" max="1440" title="minutos">
+          <button id="gc-custom-set" class="go tiny">set</button>
+        </div>
+        <div class="row">
+          <select id="gc-avail" style="width:auto">
+            <option value="Active">Active</option>
+            <option value="Busy">Busy</option>
+            <option value="DoNotDisturb">DoNotDisturb</option>
+            <option value="Away">Away</option>
+          </select>
+          <button id="gc-avail-set" class="go tiny">availability</button>
+          <button id="gc-custom-clearcal" class="tiny">clear calendar</button>
+        </div>
         <div class="label">title / pronouns</div>
         <div class="row"><input id="gc-ptitle" class="med" placeholder="title"><button id="gc-ptitle-set" class="go tiny">set</button></div>
         <div class="row"><input id="gc-ppron" class="med" placeholder="they/them"><button id="gc-ppron-set" class="go tiny">set</button></div>
+        <div class="label">outfit (JSON saveSpaceOutfit)</div>
+        <textarea id="gc-outfit-json" placeholder='{"skin":"...","hair":"...","top":"..."}'></textarea>
+        <div class="grid">
+          <button id="gc-outfit-last" class="tiny">usar último capturado</button>
+          <button id="gc-outfit-save" class="go tiny">salvar outfit</button>
+        </div>
         <div class="label">emote</div>
         <div class="grid4">
-          <button data-emote="dance">💃</button><button data-emote="wave">👋</button>
-          <button data-emote="thumbsup">👍</button><button data-emote="heart">❤</button>
-          <button data-emote="cry">😢</button><button data-emote="laugh">😂</button>
-          <button data-emote="clap">👏</button><button data-emote="party">🥳</button>
+          <button data-emote="👋">👋</button><button data-emote="❤️">❤️</button>
+          <button data-emote="❤️" data-count="2">❤️×2</button><button data-emote="🎉">🎉</button>
+          <button data-emote="👍️">👍</button><button data-emote="🤣">🤣</button>
+          <button data-emote="👏">👏</button><button data-emote="🔥">🔥</button>
         </div>
       </div>
 

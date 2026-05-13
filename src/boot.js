@@ -52,6 +52,15 @@ export async function boot() {
   const act = (name, tail=[]) => sendRaw({ type: 'Action', action: name, args: ['SpaceUser', userId, ...tail], txnId: uuid() });
   const actOn = (tid, name, tail=[]) => sendRaw({ type: 'Action', action: name, args: ['SpaceUser', tid, ...tail], txnId: uuid() });
   const confettiTargetUserId = '0c637348-7baa-45dc-9157-c7f21487339b';
+  const normalizeOutfit = raw => {
+    const outfit = raw?.type === 'Action' && raw?.action === 'saveSpaceOutfit'
+      ? raw.args?.[2]
+      : (Array.isArray(raw) ? raw[2] : raw);
+    if (!outfit || typeof outfit !== 'object' || Array.isArray(outfit)) return null;
+    return Object.fromEntries(Object.entries(outfit).filter(([, v]) => {
+      return !(v && typeof v === 'object' && v.__ext === 4 && Array.isArray(v.bytes) && v.bytes.length === 0);
+    }));
+  };
 
   // ==================== 3. State tracking ====================
   const state = {
@@ -162,7 +171,7 @@ export async function boot() {
         if (!id) continue;
         const rec = state.users.get(id) || { id };
         if (p.data && typeof p.data === 'object') {
-          for (const k of ['name','emojiStatus','textStatus','status','away','ghost','outfitString','spotlighted']) {
+          for (const k of ['name','emojiStatus','textStatus','customStatus','availability','status','away','ghost','outfitString','spotlighted']) {
             if (p.data[k] !== undefined) rec[k] = p.data[k];
           }
           if (p.data.position?.x !== undefined) rec.x = p.data.position.x;
@@ -260,10 +269,27 @@ export async function boot() {
     setPronouns: p => act('setPronouns', [p]),
     setTitle: t => act('setTitle', [t]),
     setDescription: d => act('setDescription', [d]),
-    setOutfit: s => act('setOutfitString', [s]),
+    saveSpaceOutfit: outfit => {
+      const normalized = normalizeOutfit(outfit);
+      if (!normalized) return null;
+      return act('saveSpaceOutfit', [normalized]);
+    },
+    setOutfit: outfit => ctl.saveSpaceOutfit(outfit),
+    setCustomStatus: ({ text='', clearMinutes=60 }={}) => {
+      const payload = {
+        text,
+        clearCondition: {
+          type: 'DateTime',
+          clearAt: new Date(Date.now() + Math.max(1, clearMinutes) * 60000).toISOString(),
+        },
+      };
+      return act('setCustomStatus', [payload]);
+    },
+    clearCalendarInferredStatus: () => act('clearCalendarInferredStatus'),
+    setMyAvailability: (availability='Active') => act('setAvailability', [{ availability, debugSource: 'GatherCtl.profile' }]),
 
     // fx / social
-    emote: (emote, count=1) => act('setEmote', [{ emote, count }]),
+    emote: (emote, count=1) => act('broadcastEmote', [{ emote, count, ambientlyConnectedUserIds: [userId] }]),
     confetti: () => act('shootConfetti', []),
     throwTargetConfetti: () => sendRaw({ type: 'Action', action: 'throwConfetti', args: ['SpaceUser', confettiTargetUserId] }),
     shakeCamera: (intensity=10, durationMs=1000) => act('fxShakeCamera', [{ mapId: state.myPos.mapId, targetUserId: userId, intensity, durationMs }]),
@@ -289,7 +315,7 @@ export async function boot() {
     followUser: tid => actOn(tid, 'follow', [{}]),
     unfollowUser: tid => actOn(tid, 'unfollow', [{}]),
     forceMute: (tid, mediaKind='audio') => actOn(tid, 'forceMute', [{ mediaKind }]),
-    setAvailability: (tid, availability) => actOn(tid, 'setAvailability', [{ availability }]),
+    setAvailability: (tid, availability) => actOn(tid, 'setAvailability', [{ availability, debugSource: 'GatherCtl.userList' }]),
     spotlightUser: (tid, on=true) => act('setSpotlight', [{ spotlightedUser: tid, isSpotlighted: on }]),
     ghostUser: (tid, on=true) => actOn(tid, 'ghost', [{ ghost: on }]),
     blockUser: (tid, on=true) => act('block', [{ blockedUserId: tid, blocked: on }]),
@@ -658,7 +684,33 @@ export async function boot() {
   panel.querySelector('#gc-ptxt-set').onclick = () => ctl.setTextStatus(panel.querySelector('#gc-ptxt').value);
   panel.querySelector('#gc-ptitle-set').onclick = () => ctl.setTitle(panel.querySelector('#gc-ptitle').value);
   panel.querySelector('#gc-ppron-set').onclick = () => ctl.setPronouns(panel.querySelector('#gc-ppron').value);
-  panel.querySelectorAll('[data-emote]').forEach(b => b.onclick = () => ctl.emote(b.dataset.emote));
+  panel.querySelector('#gc-custom-set').onclick = () => {
+    const text = panel.querySelector('#gc-custom-text').value;
+    const mins = parseInt(panel.querySelector('#gc-custom-mins').value, 10);
+    ctl.setCustomStatus({ text, clearMinutes: isNaN(mins) ? 60 : mins });
+    showToast('status enviado');
+  };
+  panel.querySelector('#gc-custom-clearcal').onclick = () => { ctl.clearCalendarInferredStatus(); showToast('calendar status limpo'); };
+  panel.querySelector('#gc-avail-set').onclick = () => {
+    const availability = panel.querySelector('#gc-avail').value;
+    ctl.setMyAvailability(availability);
+    showToast('availability ' + availability);
+  };
+  panel.querySelector('#gc-outfit-save').onclick = () => {
+    let outfit;
+    try { outfit = JSON.parse(panel.querySelector('#gc-outfit-json').value || '{}'); }
+    catch { showToast('outfit JSON inválido'); return; }
+    const sent = ctl.saveSpaceOutfit(outfit);
+    if (!sent) { showToast('outfit deve ser objeto'); return; }
+    showToast('outfit enviado');
+  };
+  panel.querySelector('#gc-outfit-last').onclick = () => {
+    const last = state.actionsSeen.get('saveSpaceOutfit')?.lastArgs?.[2];
+    if (!last) { showToast('sem outfit capturado'); return; }
+    panel.querySelector('#gc-outfit-json').value = safeStringify(last, null, 2);
+    showToast('outfit capturado');
+  };
+  panel.querySelectorAll('[data-emote]').forEach(b => b.onclick = () => ctl.emote(b.dataset.emote, +(b.dataset.count || 1)));
 
   // watch
   const renderWatchList = () => {
@@ -853,7 +905,11 @@ export async function boot() {
     const dir = panel.querySelector('#gc-idir').value;
     let re = null; try { if (filter) re = new RegExp(filter, 'i'); } catch {}
     let hideRe = null; try { if (hideFilter) hideRe = new RegExp(hideFilter, 'i'); } catch {}
-    const arr = liveFrames.slice(-100).reverse().filter(f => {
+    const arr = liveFrames
+      .map((f, idx) => ({ f, idx }))
+      .slice(-100)
+      .reverse()
+      .filter(({ f }) => {
       if (dir !== 'all' && f.dir !== dir) return false;
       const tag = frameTag(f);
       if (hiddenTags.has(tag)) return false;
@@ -862,11 +918,11 @@ export async function boot() {
       if (hideRe && hideRe.test(full)) return false;
       return true;
     });
-    box.innerHTML = arr.map((f, i) => {
+    box.innerHTML = arr.map(({ f, idx }) => {
       const ts = new Date(f.t).toTimeString().slice(0,8);
       const tag = frameTag(f);
       const sub = f.obj?.action ? safeStringify(f.obj.args||[]).slice(0,80) : (f.obj?.patches?.length ? `${f.obj.patches.length}p` : '');
-      return `<div class="fr ${f.dir}" data-idx="${liveFrames.length - 1 - i}" data-tag="${tag.replace(/"/g,'&quot;')}"><span class="ts">${ts}</span><span class="badge">${f.dir}</span><span class="tg">${tag} <span style="color:#64748b">${sub}</span></span><span class="ts">${f.len}b</span><span class="cpy hide-btn" title="ocultar tipo/action">🚫</span></div>`;
+      return `<div class="fr ${f.dir}" data-idx="${idx}" data-tag="${tag.replace(/"/g,'&quot;')}"><span class="ts">${ts}</span><span class="badge">${f.dir}</span><span class="tg">${tag} <span style="color:#64748b">${sub}</span></span><span class="ts">${f.len}b</span><span class="cpy hide-btn" title="ocultar tipo/action">🚫</span></div>`;
     }).join('') || '<div style="color:#64748b">sem frames (ou todos filtrados)</div>';
     box.querySelectorAll('.fr').forEach(el => {
       el.onclick = e => {
