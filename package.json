@@ -1,6 +1,6 @@
 {
   "name": "gather-ctl",
-  "version": "4.4.3",
+  "version": "4.4.4",
   "description": "Gather.town WebSocket controller userscript — modular build",
   "private": true,
   "type": "module",

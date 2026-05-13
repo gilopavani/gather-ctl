@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gather Controller
 // @namespace    local.gather.ctl
-// @version      4.4.3
+// @version      4.4.4
 // @description  Gather.town WS controller — modular build
 // @match        https://app.v2.gather.town/*
 // @match        https://gather.town/*
@@ -405,7 +405,7 @@
       </div>
 
       <div class="pane" data-pane="rooms">
-        <div class="label">map areas (<span id="gc-rmcount">0</span>) \u2014 \u{1F512}/\u{1F513} click toggle</div>
+        <div class="label">salas / map areas (<span id="gc-rmcount">0</span>) \u2014 click seleciona \xB7 dblclick tp</div>
         <div class="row">
           <input id="gc-rmfilter" class="med" placeholder="filtro nome/id">
           <button id="gc-rmlockall" class="adm tiny">\u{1F512} all</button>
@@ -413,11 +413,12 @@
           <button id="gc-rmdump" class="tiny">\u{1F4CB} dump</button>
         </div>
         <div id="gc-rmlist" class="userlist"></div>
-        <div class="label">lock/unlock manual (areaId)</div>
+        <div class="label">sala selecionada (areaId)</div>
         <div class="row">
           <input id="gc-rmid" class="wide" placeholder="MapArea uuid">
         </div>
-        <div class="grid3">
+        <div class="grid4">
+          <button id="gc-rmtp" class="go">tp sala</button>
           <button id="gc-rmlock" class="adm">\u{1F512} lock</button>
           <button id="gc-rmunlock" class="go">\u{1F513} unlock</button>
           <button id="gc-rmtoggle">toggle</button>
@@ -1388,9 +1389,10 @@
       box.innerHTML = "";
       for (const a of arr) {
         const row = document.createElement("div");
-        row.className = "u";
         const lk = a.locked ? "\u{1F512}" : "\u{1F513}";
         const idStr = String(a.id || "");
+        const selected = panel.querySelector("#gc-rmid")?.value.trim() === idStr;
+        row.className = "u" + (selected ? " me" : "");
         const nm = a.name || idStr.slice(0, 8);
         const t = a.areaType || a.type || "";
         row.innerHTML = `<span class="nm" title="${idStr}">${lk} ${nm} <span style="color:#64748b">${t}</span></span><span class="co">${a.mapId ? ("" + a.mapId).slice(0, 6) : ""}</span>`;
@@ -1400,9 +1402,14 @@
             ctl.teleportToArea(idStr);
             showToast("tp \u2192 " + nm);
           } else {
-            ctl.toggleAreaLock(idStr);
-            showToast((a.locked ? "unlock" : "lock") + " " + nm);
+            showToast("sala selecionada: " + nm);
+            renderRooms();
           }
+        };
+        row.ondblclick = () => {
+          panel.querySelector("#gc-rmid").value = idStr;
+          ctl.teleportToArea(idStr);
+          showToast("tp \u2192 " + nm);
         };
         row.oncontextmenu = (e) => {
           e.preventDefault();
@@ -1423,6 +1430,11 @@
       console.table(arr);
     };
     const rmId = () => panel.querySelector("#gc-rmid").value.trim();
+    panel.querySelector("#gc-rmtp").onclick = () => {
+      const id = rmId();
+      if (id) ctl.teleportToArea(id);
+      else showToast("selecione uma sala");
+    };
     panel.querySelector("#gc-rmlock").onclick = () => {
       const id = rmId();
       if (id) ctl.lockArea(id);

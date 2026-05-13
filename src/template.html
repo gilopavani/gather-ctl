@@ -173,7 +173,7 @@
       </div>
 
       <div class="pane" data-pane="rooms">
-        <div class="label">map areas (<span id="gc-rmcount">0</span>) — 🔒/🔓 click toggle</div>
+        <div class="label">salas / map areas (<span id="gc-rmcount">0</span>) — click seleciona · dblclick tp</div>
         <div class="row">
           <input id="gc-rmfilter" class="med" placeholder="filtro nome/id">
           <button id="gc-rmlockall" class="adm tiny">🔒 all</button>
@@ -181,11 +181,12 @@
           <button id="gc-rmdump" class="tiny">📋 dump</button>
         </div>
         <div id="gc-rmlist" class="userlist"></div>
-        <div class="label">lock/unlock manual (areaId)</div>
+        <div class="label">sala selecionada (areaId)</div>
         <div class="row">
           <input id="gc-rmid" class="wide" placeholder="MapArea uuid">
         </div>
-        <div class="grid3">
+        <div class="grid4">
+          <button id="gc-rmtp" class="go">tp sala</button>
           <button id="gc-rmlock" class="adm">🔒 lock</button>
           <button id="gc-rmunlock" class="go">🔓 unlock</button>
           <button id="gc-rmtoggle">toggle</button>

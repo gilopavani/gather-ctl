@@ -772,9 +772,10 @@ export async function boot() {
     box.innerHTML = '';
     for (const a of arr) {
       const row = document.createElement('div');
-      row.className = 'u';
       const lk = a.locked ? '🔒' : '🔓';
       const idStr = String(a.id||'');
+      const selected = panel.querySelector('#gc-rmid')?.value.trim() === idStr;
+      row.className = 'u' + (selected ? ' me' : '');
       const nm = a.name || idStr.slice(0, 8);
       const t = a.areaType || a.type || '';
       row.innerHTML = `<span class="nm" title="${idStr}">${lk} ${nm} <span style="color:#64748b">${t}</span></span><span class="co">${a.mapId?(''+a.mapId).slice(0,6):''}</span>`;
@@ -784,9 +785,14 @@ export async function boot() {
           ctl.teleportToArea(idStr);
           showToast('tp → ' + nm);
         } else {
-          ctl.toggleAreaLock(idStr);
-          showToast((a.locked?'unlock':'lock') + ' ' + nm);
+          showToast('sala selecionada: ' + nm);
+          renderRooms();
         }
+      };
+      row.ondblclick = () => {
+        panel.querySelector('#gc-rmid').value = idStr;
+        ctl.teleportToArea(idStr);
+        showToast('tp → ' + nm);
       };
       row.oncontextmenu = e => { e.preventDefault(); navigator.clipboard?.writeText(idStr); showToast('id copiado'); };
       box.appendChild(row);
@@ -801,6 +807,7 @@ export async function boot() {
     console.table(arr);
   };
   const rmId = () => panel.querySelector('#gc-rmid').value.trim();
+  panel.querySelector('#gc-rmtp').onclick = () => { const id=rmId(); if (id) ctl.teleportToArea(id); else showToast('selecione uma sala'); };
   panel.querySelector('#gc-rmlock').onclick = () => { const id=rmId(); if (id) ctl.lockArea(id); };
   panel.querySelector('#gc-rmunlock').onclick = () => { const id=rmId(); if (id) ctl.unlockArea(id); };
   panel.querySelector('#gc-rmtoggle').onclick = () => { const id=rmId(); if (id) ctl.toggleAreaLock(id); };
